@@ -29,7 +29,7 @@ export const getMeal = (id) => api.get(`/meals/${id}`)
 export const createMeal = (meal) => api.post('/meals', meal)
 export const updateMeal = (id, meal) => api.put(`/meals/${id}`, meal)
 export const deleteMeal = (id) => api.delete(`/meals/${id}`)
-export const getRandomMeals = () => api.get('/random')
+export const getRandomMeals = () => api.get('/meals/random')
 export const getShoppingList = (mealIds) => api.post('/shopping-list', { meal_ids: mealIds })
 
 export default api
