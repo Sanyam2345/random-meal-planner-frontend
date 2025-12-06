@@ -1,26 +1,12 @@
-import { useState, useEffect } from 'react'
-import { getMeals } from '../api'
+import { useMeals } from '../hooks/useMeals'
+import { Link } from 'react-router-dom'
+import { getCategoryColor } from '../utils/helpers'
 
 function Categories() {
-    const [meals, setMeals] = useState([])
-    const [loading, setLoading] = useState(true)
-
-    useEffect(() => {
-        loadMeals()
-    }, [])
-
-    const loadMeals = async () => {
-        try {
-            const response = await getMeals()
-            setMeals(response.data)
-        } catch (error) {
-            console.error('Error loading meals:', error)
-        } finally {
-            setLoading(false)
-        }
-    }
+    const { data: meals, isLoading, error } = useMeals()
 
     const getFilteredMeals = (category) => {
+        if (!meals) return []
         return meals.filter(
             (meal) => meal.category.toLowerCase() === category.toLowerCase()
         )
@@ -33,10 +19,18 @@ function Categories() {
         { id: 'snack', label: 'Snacks', emoji: '🍿', color: 'from-pink-400 to-rose-400' },
     ]
 
-    if (loading) {
+    if (isLoading) {
         return (
             <div className="flex justify-center items-center h-screen">
                 <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-white"></div>
+            </div>
+        )
+    }
+
+    if (error) {
+        return (
+            <div className="text-center text-red-200 py-20">
+                <h2 className="text-2xl">Error loading meals.</h2>
             </div>
         )
     }
@@ -72,12 +66,12 @@ function Categories() {
                                 {categoryMeals.map((meal) => (
                                     <div
                                         key={meal.id}
-                                        className="glass-card group rounded-2xl overflow-hidden hover:transform hover:-translate-y-2 transition-all duration-300"
+                                        className="glass-card group rounded-2xl overflow-hidden hover:transform hover:-translate-y-2 transition-all duration-300 flex flex-col h-full"
                                     >
                                         <div className="h-48 overflow-hidden relative">
                                             <div className={`absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10`}></div>
                                             <img
-                                                src={`https://source.unsplash.com/400x300/?${encodeURIComponent(meal.name)}`}
+                                                src={meal.image_url || `https://source.unsplash.com/400x300/?${encodeURIComponent(meal.name)}`}
                                                 alt={meal.name}
                                                 className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
                                                 onError={(e) => {
@@ -89,10 +83,22 @@ function Categories() {
                                             </div>
                                         </div>
 
-                                        <div className="p-4 bg-white/40 backdrop-blur-md">
-                                            <p className="text-gray-700 text-sm line-clamp-2 min-h-[2.5em]">
+                                        <div className="p-4 bg-white/40 dark:bg-slate-800/40 backdrop-blur-md flex-grow flex flex-col">
+                                            <div className="flex gap-4 mb-2 text-xs text-gray-700 dark:text-gray-300 font-medium">
+                                                {meal.prep_time && (
+                                                    <span className="flex items-center gap-1">⏱️ {meal.prep_time}m</span>
+                                                )}
+                                                {meal.servings && (
+                                                    <span className="flex items-center gap-1">👥 {meal.servings}</span>
+                                                )}
+                                            </div>
+                                            <p className="text-gray-700 dark:text-gray-200 text-sm line-clamp-2 min-h-[2.5em] mb-4">
                                                 {meal.ingredients}
                                             </p>
+
+                                            <div className="mt-auto">
+                                                <Link to={`/edit-meal/${meal.id}`} className="text-blue-600 text-sm hover:underline">Edit Details</Link>
+                                            </div>
                                         </div>
                                     </div>
                                 ))}
@@ -102,7 +108,7 @@ function Categories() {
                 })}
             </div>
 
-            {meals.length === 0 && (
+            {meals && meals.length === 0 && (
                 <div className="text-center text-white/80 py-20">
                     <h2 className="text-2xl">No meals found in the database.</h2>
                 </div>

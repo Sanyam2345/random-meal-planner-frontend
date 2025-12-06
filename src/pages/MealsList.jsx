@@ -1,134 +1,135 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { getMeals, deleteMeal } from '../api'
+import { useMeals, useMealMutation } from '../hooks/useMeals'
+import toast from 'react-hot-toast'
+import MealCard from '../components/meals/MealCard'
+import MealFilters from '../components/meals/MealFilters'
+import SkeletonCard from '../components/common/SkeletonCard'
+import ErrorMessage from '../components/common/ErrorMessage'
 
 function MealsList() {
-  const [meals, setMeals] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [filters, setFilters] = useState({
+    search: '',
+    min_calories: '',
+    max_calories: '',
+    diet_type: 'all',
+    include_ingredients: '',
+  })
+
+  // Debounce the search input
+  const [debouncedFilters, setDebouncedFilters] = useState(filters)
 
   useEffect(() => {
-    loadMeals()
-  }, [])
+    const timer = setTimeout(() => {
+      setDebouncedFilters(filters)
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [filters])
 
-  const loadMeals = async () => {
-    try {
-      const response = await getMeals()
-      setMeals(response.data)
-    } catch (error) {
-      console.error('Error loading meals:', error)
-      if (error.request) {
-        alert('Cannot connect to backend server. Make sure it is running on http://localhost:8000')
-      }
-    } finally {
-      setLoading(false)
-    }
+  const { data: meals, isLoading, error } = useMeals(debouncedFilters)
+  const { deleteMutation } = useMealMutation()
+  const [showFilters, setShowFilters] = useState(false)
+
+  const handleFilterChange = (name, value) => {
+    setFilters(prev => ({ ...prev, [name]: value }))
+  }
+
+  const handleReset = () => {
+    setFilters({
+      search: '',
+      min_calories: '',
+      max_calories: '',
+      diet_type: 'all',
+      include_ingredients: ''
+    })
   }
 
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this meal?')) {
-      try {
-        await deleteMeal(id)
-        loadMeals()
-      } catch (error) {
-        console.error('Error deleting meal:', error)
-      }
+      deleteMutation.mutate(id, {
+        onSuccess: () => toast.success('Meal deleted successfully'),
+        onError: () => toast.error('Failed to delete meal'),
+      })
     }
   }
 
-  const getCategoryColor = (category) => {
-    const colors = {
-      breakfast: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      lunch: 'bg-green-100 text-green-800 border-green-200',
-      dinner: 'bg-blue-100 text-blue-800 border-blue-200',
-    }
-    return colors[category] || 'bg-gray-100 text-gray-800 border-gray-200'
-  }
-
-  if (loading) {
+  if (error) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+      <div className="glass-card p-8 text-center text-red-600">
+        <p>Error loading meals. Is the backend running?</p>
       </div>
     )
   }
 
   return (
-    <div className="max-w-7xl mx-auto">
-      <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-        <div>
-          <h1 className="text-4xl font-bold text-white drop-shadow-md mb-2">My Meal Collection</h1>
-          <p className="text-blue-100">Manage and organize your favorite recipes</p>
-        </div>
-        <Link
-          to="/add-meal"
-          className="btn-primary"
+    <div className="max-w-7xl mx-auto flex flex-col md:flex-row gap-8">
+
+      {/* Filters Sidebar - Mobile Toggle */}
+      <div className="md:hidden mb-4">
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          className="w-full btn-secondary flex justify-center items-center gap-2"
         >
-          + Add New Meal
+          <span>🌪️</span> {showFilters ? 'Hide Filters' : 'Show Filters'}
+        </button>
+      </div>
+
+      <MealFilters
+        filters={filters}
+        onChange={handleFilterChange}
+        onReset={handleReset}
+        show={showFilters}
+        onClose={() => setShowFilters(false)}
+      />
+
+      {/* Main Content */}
+      <div className="flex-grow">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold text-white drop-shadow-md">
+            Results <span className="text-lg font-normal opacity-80 ml-2">({meals?.length || 0})</span>
+          </h1>
+          <Link to="/add-meal" className="hidden md:inline-block btn-primary whitespace-nowrap">
+            + Add Meal
+          </Link>
+        </div>
+
+        {isLoading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+          </div>
+        ) : !meals || meals.length === 0 ? (
+          <div className="glass-card rounded-2xl p-12 text-center text-gray-800 dark:text-white">
+            <p className="text-xl mb-6">No meals found matching your filters.</p>
+            <button
+              onClick={handleReset}
+              className="text-blue-500 hover:underline"
+            >
+              Clear all filters
+            </button>
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {meals.map((meal) => (
+              <MealCard
+                key={meal.id}
+                meal={meal}
+                onDelete={handleDelete}
+                showDelete={true}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Mobile Add Button */}
+      <div className="md:hidden fixed bottom-6 right-6 z-40">
+        <Link to="/add-meal" className="btn-primary rounded-full w-14 h-14 flex items-center justify-center text-3xl shadow-lg">
+          +
         </Link>
       </div>
 
-      {meals.length === 0 ? (
-        <div className="glass-card rounded-2xl p-12 text-center text-gray-800">
-          <p className="text-xl mb-6">No meals found. Start building your collection!</p>
-          <Link
-            to="/add-meal"
-            className="text-blue-600 font-semibold hover:text-blue-800 underline decoration-2 underline-offset-4"
-          >
-            Add your first meal →
-          </Link>
-        </div>
-      ) : (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {meals.map((meal) => (
-            <div
-              key={meal.id}
-              className="glass-card glass-card-hover rounded-2xl p-6 flex flex-col h-full group"
-            >
-              <div className="flex justify-between items-start mb-4">
-                <span
-                  className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide border ${getCategoryColor(
-                    meal.category
-                  )}`}
-                >
-                  {meal.category}
-                </span>
-                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    onClick={() => handleDelete(meal.id)}
-                    className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors"
-                    title="Delete"
-                  >
-                    🗑️
-                  </button>
-                </div>
-              </div>
-
-              <h2 className="text-2xl font-bold text-gray-800 mb-3 line-clamp-2">
-                {meal.name}
-              </h2>
-
-              <div className="flex-grow">
-                <h3 className="text-xs uppercase text-gray-400 font-semibold mb-2">Ingredients</h3>
-                <p className="text-gray-600 text-sm line-clamp-4 leading-relaxed">
-                  {meal.ingredients}
-                </p>
-              </div>
-
-              <div className="mt-6 pt-4 border-t border-gray-100 flex gap-4">
-                <Link
-                  to={`/edit-meal/${meal.id}`}
-                  className="w-full text-center py-2 rounded-lg bg-gray-50 hover:bg-white text-gray-700 font-medium transition-colors border border-gray-200"
-                >
-                  Edit Details
-                </Link>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   )
 }
 
 export default MealsList
-

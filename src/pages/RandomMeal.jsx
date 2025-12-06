@@ -1,35 +1,11 @@
-import { useState } from 'react'
-import { getRandomMeals } from '../api'
+import { useRandomMeal } from '../hooks/useMeals'
+import toast from 'react-hot-toast'
 
 function RandomMeal() {
-  const [meals, setMeals] = useState(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const { data: meals, refetch, isFetching, error } = useRandomMeal()
 
-  const handleGenerate = async () => {
-    setLoading(true)
-    setError('')
-    setMeals(null)
-
-    try {
-      const response = await getRandomMeals()
-      setMeals(response.data)
-
-      if (!response.data.breakfast && !response.data.lunch && !response.data.dinner) {
-        setError('No meals found. Please add meals to your database first.')
-      }
-    } catch (err) {
-      console.error('Error generating random meals:', err)
-      if (err.response) {
-        setError(`Failed to generate: ${err.response.data?.detail || err.response.statusText}`)
-      } else if (err.request) {
-        setError('Cannot connect to backend server. Make sure it is running on http://localhost:8000')
-      } else {
-        setError('Failed to generate random meals. Please try again.')
-      }
-    } finally {
-      setLoading(false)
-    }
+  const handleGenerate = () => {
+    refetch().catch(() => toast.error('Failed to generate meal plan'))
   }
 
   const getCategoryColor = (category) => {
@@ -50,6 +26,10 @@ function RandomMeal() {
     return emojis[category] || '🍴'
   }
 
+  if (error) {
+    toast.error('Something went wrong. Is the backend running?')
+  }
+
   return (
     <div className="max-w-6xl mx-auto px-4">
       <div className="text-center py-12">
@@ -62,17 +42,14 @@ function RandomMeal() {
 
         <button
           onClick={handleGenerate}
-          disabled={loading}
+          disabled={isFetching}
           className="group relative inline-flex items-center justify-center px-12 py-6 overflow-hidden font-bold text-white transition-all duration-300 bg-white/20 rounded-full hover:bg-white/30 backdrop-blur-md border border-white/50 shadow-2xl hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
         >
           <span className="absolute inset-0 w-full h-full -mt-1 rounded-lg opacity-30 bg-gradient-to-b from-transparent via-transparent to-black" />
           <span className="relative flex items-center text-xl">
-            {loading ? (
+            {isFetching ? (
               <>
-                <svg className="animate-spin -ml-1 mr-3 h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
+                <div className="animate-spin -ml-1 mr-3 h-6 w-6 text-white border-2 border-white/50 border-t-white rounded-full"></div>
                 Cooking up a plan...
               </>
             ) : (
@@ -82,43 +59,50 @@ function RandomMeal() {
         </button>
       </div>
 
-      {error && (
-        <div className="glass-card p-6 bg-red-500/20 text-red-100 rounded-xl mb-8 border border-red-500/30 text-center max-w-2xl mx-auto back">
-          {error}
-        </div>
-      )}
-
       {meals && (
         <div className="grid md:grid-cols-3 gap-8 mt-8 animate-fade-in-up">
           {['breakfast', 'lunch', 'dinner'].map((category) => {
             const meal = meals[category]
+            if (!meal) return null
+
             return (
               <div
                 key={category}
                 className="transform transition-all duration-500 hover:-translate-y-2"
               >
-                <div className={`glass-card rounded-3xl overflow-hidden h-full flex flex-col`}>
+                <div className={`glass-card rounded-3xl overflow-hidden h-full flex flex-col group`}>
                   <div className={`h-2 bg-gradient-to-r ${getCategoryColor(category)}`}></div>
-                  <div className="p-8 flex flex-col h-full bg-white/40">
-                    <div className="flex items-center justify-between mb-6">
-                      <span className="text-4xl filter drop-shadow-md">{getCategoryEmoji(category)}</span>
-                      <span className="text-sm font-bold uppercase tracking-wider opacity-60 text-gray-800">{category}</span>
+
+                  {/* Image Section */}
+                  <div className="h-48 relative overflow-hidden">
+                    <div className={`absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10`}></div>
+                    <img
+                      src={meal.image_url || `https://source.unsplash.com/400x300/?${encodeURIComponent(meal.name)}`}
+                      alt={meal.name}
+                      className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
+                      onError={(e) => {
+                        e.target.src = `https://placehold.co/400x300?text=${encodeURIComponent(meal.name)}`
+                      }}
+                    />
+                    <div className="absolute bottom-3 left-4 z-20 flex items-center gap-2">
+                      <span className="text-3xl filter drop-shadow-md">{getCategoryEmoji(category)}</span>
+                      <span className="text-white font-bold uppercase tracking-wider text-sm shadow-black">{category}</span>
+                    </div>
+                  </div>
+
+                  <div className="p-6 flex flex-col h-full bg-white/40 backdrop-blur-sm">
+                    <h3 className="text-2xl font-bold text-gray-800 mb-3 leading-tight">{meal.name}</h3>
+
+                    <div className="flex gap-4 mb-4 text-xs font-bold text-gray-600">
+                      {meal.prep_time && <span>⏱️ {meal.prep_time}m</span>}
+                      {meal.servings && <span>👥 {meal.servings} ppl</span>}
                     </div>
 
-                    {meal ? (
-                      <>
-                        <h3 className="text-2xl font-bold text-gray-800 mb-4">{meal.name}</h3>
-                        <div className="bg-white/50 rounded-xl p-4 flex-grow border border-white/20">
-                          <p className="text-gray-700 text-sm whitespace-pre-wrap leading-relaxed">
-                            {meal.ingredients}
-                          </p>
-                        </div>
-                      </>
-                    ) : (
-                      <div className="flex-grow flex items-center justify-center text-gray-500 italic">
-                        No meal available
-                      </div>
-                    )}
+                    <div className="bg-white/50 dark:bg-black/20 rounded-xl p-4 flex-grow border border-white/20">
+                      <p className="text-gray-700 dark:text-gray-200 text-sm line-clamp-4 leading-relaxed">
+                        {meal.ingredients}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -131,4 +115,3 @@ function RandomMeal() {
 }
 
 export default RandomMeal
-
