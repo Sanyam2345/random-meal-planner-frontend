@@ -71,30 +71,33 @@ function ShoppingList() {
 
   const getCategoryColor = (category) => {
     const colors = {
-      breakfast: 'bg-yellow-100 text-yellow-800',
-      lunch: 'bg-green-100 text-green-800',
-      dinner: 'bg-blue-100 text-blue-800',
+      breakfast: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+      lunch: 'bg-green-100 text-green-800 border-green-200',
+      dinner: 'bg-blue-100 text-blue-800 border-blue-200',
     }
-    return colors[category] || 'bg-gray-100 text-gray-800'
+    return colors[category] || 'bg-gray-100 text-gray-800 border-gray-200'
   }
 
   if (loading) {
     return (
-      <div className="max-w-6xl mx-auto">
-        <div className="text-center py-12">Loading meals...</div>
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
       </div>
     )
   }
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">Shopping List</h1>
-        <div className="flex space-x-4">
+    <div className="max-w-7xl mx-auto">
+      <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+        <div>
+          <h1 className="text-4xl font-bold text-white drop-shadow-md mb-2">Shopping List</h1>
+          <p className="text-blue-100">Select meals to generate your grocery list</p>
+        </div>
+        <div className="flex gap-4">
           {selectedMealIds.length > 0 && (
             <button
               onClick={handleClear}
-              className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition"
+              className="bg-white/20 hover:bg-white/30 text-white px-6 py-2 rounded-full transition-all border border-white/30 backdrop-blur-sm"
             >
               Clear Selection
             </button>
@@ -102,24 +105,24 @@ function ShoppingList() {
           <button
             onClick={handleGenerate}
             disabled={generating || selectedMealIds.length === 0}
-            className="bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed font-medium"
+            className="btn-primary"
           >
-            {generating ? 'Generating...' : 'Generate Shopping List'}
+            {generating ? 'Generating...' : 'Generate List'}
           </button>
         </div>
       </div>
 
       {error && (
-        <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+        <div className="mb-6 p-4 glass-card bg-red-400/10 text-red-100 rounded-lg border border-red-400/20">
           {error}
         </div>
       )}
 
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="grid md:grid-cols-2 gap-8">
         {/* Meal Selection */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">
-            Select Meals ({selectedMealIds.length} selected)
+        <div className="glass-card rounded-2xl p-6 flex flex-col h-[600px]">
+          <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+            <span>🥗</span> Select Meals <span className="text-sm font-normal text-gray-500 bg-white/50 px-2 py-0.5 rounded-full ml-2">{selectedMealIds.length} selected</span>
           </h2>
 
           {meals.length === 0 ? (
@@ -127,34 +130,33 @@ function ShoppingList() {
               <p>No meals available. Add some meals first!</p>
             </div>
           ) : (
-            <div className="space-y-3 max-h-96 overflow-y-auto">
+            <div className="space-y-3 overflow-y-auto pr-2 custom-scrollbar flex-grow">
               {meals.map((meal) => (
                 <label
                   key={meal.id}
-                  className={`flex items-start p-3 border-2 rounded-lg cursor-pointer transition ${
-                    selectedMealIds.includes(meal.id)
-                      ? 'border-orange-500 bg-orange-50'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
+                  className={`flex items-start p-4 border rounded-xl cursor-pointer transition-all duration-200 ${selectedMealIds.includes(meal.id)
+                      ? 'border-blue-500 bg-blue-50/50 shadow-sm'
+                      : 'border-transparent bg-white/50 hover:bg-white/80'
+                    }`}
                 >
                   <input
                     type="checkbox"
                     checked={selectedMealIds.includes(meal.id)}
                     onChange={() => handleMealToggle(meal.id)}
-                    className="mt-1 mr-3 h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+                    className="mt-1 mr-4 h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   />
                   <div className="flex-1">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-medium text-gray-800">{meal.name}</span>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-bold text-gray-800">{meal.name}</span>
                       <span
-                        className={`px-2 py-1 rounded text-xs font-medium ${getCategoryColor(
+                        className={`px-2 py-1 rounded-md text-xs font-bold uppercase tracking-wide border ${getCategoryColor(
                           meal.category
                         )}`}
                       >
                         {meal.category}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-600 line-clamp-2">{meal.ingredients}</p>
+                    <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed opacity-80">{meal.ingredients}</p>
                   </div>
                 </label>
               ))}
@@ -163,33 +165,41 @@ function ShoppingList() {
         </div>
 
         {/* Shopping List */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">Shopping List</h2>
+        <div className="glass-card rounded-2xl p-6 flex flex-col h-[600px]">
+          <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+            <span>🛒</span> Your List
+          </h2>
 
           {!shoppingList ? (
-            <div className="text-center py-12 text-gray-500">
-              <p className="mb-2">Select meals and generate your shopping list</p>
-              <p className="text-sm">Ingredients will be combined and deduplicated</p>
+            <div className="flex-grow flex flex-col items-center justify-center text-gray-400/80 text-center p-8 bg-white/30 rounded-xl border border-dashed border-gray-300">
+              <span className="text-6xl mb-4 grayscale opacity-50">📝</span>
+              <p className="font-medium text-lg text-gray-500">Ready to shop?</p>
+              <p className="text-sm">Select meals on the left and click Generate</p>
             </div>
           ) : shoppingList.ingredients.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <p>No ingredients found in selected meals</p>
+            <div className="text-center py-8 text-gray-500 bg-white/30 rounded-xl border border-dashed border-gray-300">
+              <p>No ingredients found. Are the meals empty?</p>
             </div>
           ) : (
-            <div className="space-y-2 max-h-96 overflow-y-auto">
-              {shoppingList.ingredients.map((item, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition"
-                >
-                  <span className="text-gray-800 font-medium capitalize">{item.ingredient}</span>
-                  {item.count > 1 && (
-                    <span className="bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full">
-                      {item.count}x
-                    </span>
-                  )}
-                </div>
-              ))}
+            <div className="overflow-y-auto pr-2 custom-scrollbar flex-grow">
+              <div className="grid gap-3">
+                {shoppingList.ingredients.map((item, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-4 bg-white/60 backdrop-blur-sm rounded-xl hover:bg-white/90 transition-all border border-white/50 shadow-sm group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="h-2 w-2 rounded-full bg-blue-400 group-hover:bg-blue-600 transition-colors"></div>
+                      <span className="text-gray-800 font-medium capitalize text-lg">{item.ingredient}</span>
+                    </div>
+                    {item.count > 1 && (
+                      <span className="bg-blue-100 text-blue-700 text-sm font-bold px-3 py-1 rounded-full border border-blue-200">
+                        {item.count}x
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
@@ -199,4 +209,3 @@ function ShoppingList() {
 }
 
 export default ShoppingList
-

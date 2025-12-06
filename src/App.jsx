@@ -9,35 +9,41 @@ import ShoppingList from './pages/ShoppingList'
 function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-gray-50">
-        <nav className="bg-blue-600 text-white shadow-lg">
-          <div className="container mx-auto px-4 py-4">
+      {/* Background is handled in index.css body */}
+      <div className="min-h-screen text-gray-800 font-sans">
+        <nav className="glass-nav">
+          <div className="container mx-auto px-6 py-4">
             <div className="flex items-center justify-between">
-              <Link to="/" className="text-2xl font-bold">
-                🍽️ Random Meal Planner
+              <Link to="/" className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+                <span className="text-3xl">🍽️</span>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-blue-100">MealGenie</span>
               </Link>
-              <div className="flex space-x-4">
-                <Link to="/" className="hover:text-blue-200 transition">
+
+              {/* Desktop Menu */}
+              <div className="hidden md:flex space-x-2">
+                <Link to="/" className="px-4 py-2 rounded-full text-white hover:bg-white/20 transition-all font-medium">
                   Home
                 </Link>
-                <Link to="/meals" className="hover:text-blue-200 transition">
+                <Link to="/meals" className="px-4 py-2 rounded-full text-white hover:bg-white/20 transition-all font-medium">
                   Meals
                 </Link>
-                <Link to="/add-meal" className="hover:text-blue-200 transition">
+                <Link to="/add-meal" className="px-4 py-2 rounded-full text-white hover:bg-white/20 transition-all font-medium">
                   Add Meal
                 </Link>
-                <Link to="/random" className="hover:text-blue-200 transition">
-                  Random Meal
+                <Link to="/random" className="px-4 py-2 rounded-full text-white hover:bg-white/20 transition-all font-medium">
+                  Random
                 </Link>
-                <Link to="/shopping-list" className="hover:text-blue-200 transition">
+                <Link to="/shopping-list" className="px-4 py-2 rounded-full text-white hover:bg-white/20 transition-all font-medium">
                   Shopping List
                 </Link>
               </div>
+
+              {/* Mobile Menu Button can be added here later */}
             </div>
           </div>
         </nav>
 
-        <main className="container mx-auto px-4 py-8">
+        <main className="container mx-auto px-4 py-8 md:py-12">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/meals" element={<MealsList />} />

@@ -31,92 +31,96 @@ function MealsList() {
         loadMeals()
       } catch (error) {
         console.error('Error deleting meal:', error)
-        if (error.request) {
-          alert('Cannot connect to backend server. Make sure it is running on http://localhost:8000')
-        } else {
-          alert(error.response?.data?.detail || 'Failed to delete meal. Please try again.')
-        }
       }
     }
   }
 
   const getCategoryColor = (category) => {
     const colors = {
-      breakfast: 'bg-yellow-100 text-yellow-800',
-      lunch: 'bg-green-100 text-green-800',
-      dinner: 'bg-blue-100 text-blue-800',
+      breakfast: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+      lunch: 'bg-green-100 text-green-800 border-green-200',
+      dinner: 'bg-blue-100 text-blue-800 border-blue-200',
     }
-    return colors[category] || 'bg-gray-100 text-gray-800'
+    return colors[category] || 'bg-gray-100 text-gray-800 border-gray-200'
   }
 
   if (loading) {
-    return <div className="text-center py-12">Loading meals...</div>
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+      </div>
+    )
   }
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">All Meals</h1>
+    <div className="max-w-7xl mx-auto">
+      <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+        <div>
+          <h1 className="text-4xl font-bold text-white drop-shadow-md mb-2">My Meal Collection</h1>
+          <p className="text-blue-100">Manage and organize your favorite recipes</p>
+        </div>
         <Link
           to="/add-meal"
-          className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
+          className="btn-primary"
         >
-          Add New Meal
+          + Add New Meal
         </Link>
       </div>
 
       {meals.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-lg shadow">
-          <p className="text-gray-600 mb-4">No meals found. Add your first meal!</p>
+        <div className="glass-card rounded-2xl p-12 text-center text-gray-800">
+          <p className="text-xl mb-6">No meals found. Start building your collection!</p>
           <Link
             to="/add-meal"
-            className="text-blue-600 hover:underline"
+            className="text-blue-600 font-semibold hover:text-blue-800 underline decoration-2 underline-offset-4"
           >
-            Add a meal →
+            Add your first meal →
           </Link>
         </div>
       ) : (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {meals.map((meal) => (
             <div
               key={meal.id}
-              className="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition"
+              className="glass-card glass-card-hover rounded-2xl p-6 flex flex-col h-full group"
             >
               <div className="flex justify-between items-start mb-4">
-                <h2 className="text-xl font-semibold text-gray-800">
-                  {meal.name}
-                </h2>
                 <span
-                  className={`px-3 py-1 rounded-full text-sm font-medium ${getCategoryColor(
+                  className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide border ${getCategoryColor(
                     meal.category
                   )}`}
                 >
                   {meal.category}
                 </span>
+                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    onClick={() => handleDelete(meal.id)}
+                    className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors"
+                    title="Delete"
+                  >
+                    🗑️
+                  </button>
+                </div>
               </div>
 
-              <div className="mb-4">
-                <h3 className="text-sm font-medium text-gray-600 mb-2">
-                  Ingredients:
-                </h3>
-                <p className="text-gray-700 text-sm whitespace-pre-wrap">
+              <h2 className="text-2xl font-bold text-gray-800 mb-3 line-clamp-2">
+                {meal.name}
+              </h2>
+
+              <div className="flex-grow">
+                <h3 className="text-xs uppercase text-gray-400 font-semibold mb-2">Ingredients</h3>
+                <p className="text-gray-600 text-sm line-clamp-4 leading-relaxed">
                   {meal.ingredients}
                 </p>
               </div>
 
-              <div className="flex space-x-2">
+              <div className="mt-6 pt-4 border-t border-gray-100 flex gap-4">
                 <Link
                   to={`/edit-meal/${meal.id}`}
-                  className="flex-1 bg-blue-600 text-white text-center px-4 py-2 rounded hover:bg-blue-700 transition"
+                  className="w-full text-center py-2 rounded-lg bg-gray-50 hover:bg-white text-gray-700 font-medium transition-colors border border-gray-200"
                 >
-                  Edit
+                  Edit Details
                 </Link>
-                <button
-                  onClick={() => handleDelete(meal.id)}
-                  className="flex-1 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition"
-                >
-                  Delete
-                </button>
               </div>
             </div>
           ))}
