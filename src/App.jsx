@@ -5,6 +5,7 @@ import EditMeal from './pages/EditMeal'
 import MealsList from './pages/MealsList'
 import RandomMeal from './pages/RandomMeal'
 import ShoppingList from './pages/ShoppingList'
+import Categories from './pages/Categories'
 
 function App() {
   return (
@@ -23,6 +24,9 @@ function App() {
               <div className="hidden md:flex space-x-2">
                 <Link to="/" className="px-4 py-2 rounded-full text-white hover:bg-white/20 transition-all font-medium">
                   Home
+                </Link>
+                <Link to="/categories" className="px-4 py-2 rounded-full text-white hover:bg-white/20 transition-all font-medium">
+                  Categories
                 </Link>
                 <Link to="/meals" className="px-4 py-2 rounded-full text-white hover:bg-white/20 transition-all font-medium">
                   Meals
@@ -46,6 +50,7 @@ function App() {
         <main className="container mx-auto px-4 py-8 md:py-12">
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/categories" element={<Categories />} />
             <Route path="/meals" element={<MealsList />} />
             <Route path="/add-meal" element={<AddMeal />} />
             <Route path="/edit-meal/:id" element={<EditMeal />} />
